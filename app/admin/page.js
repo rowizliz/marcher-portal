@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import ContentEditor from "./ContentEditor";
 
 const PHASES = {
   week_1: { label: "Tuần 1 — Build Up", color: "#c9a84c" },
@@ -232,13 +233,13 @@ export default function AdminDashboard() {
         </div>
 
         <div className="tab-bar">
-          {["overview", "submissions", "workflow"].map((t) => (
+          {["overview", "submissions", "workflow", "content"].map((t) => (
             <button
               key={t}
               className={`tab-btn ${tab === t ? "active" : ""}`}
               onClick={() => setTab(t)}
             >
-              {t === "overview" ? "📊 Tổng quan" : t === "submissions" ? "📋 Submissions" : "⚙️ Workflow"}
+              {t === "overview" ? "📊 Tổng quan" : t === "submissions" ? "📋 Submissions" : t === "workflow" ? "⚙️ Workflow" : "✏️ Nội dung"}
             </button>
           ))}
         </div>
@@ -385,6 +386,9 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
+
+        {/* CONTENT TAB */}
+        {tab === "content" && <ContentEditor />}
 
         {/* DETAIL MODAL */}
         {selectedSub && (
