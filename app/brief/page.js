@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 const SECTIONS = [
@@ -98,6 +98,24 @@ export default function BriefPage() {
   const [formData, setFormData] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [hasPrevious, setHasPrevious] = useState(false);
+  const [previousDate, setPreviousDate] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  // Load previous submission on mount
+  useEffect(() => {
+    fetch("/api/submissions/latest")
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.form_data) {
+          setFormData(data.form_data);
+          setHasPrevious(true);
+          setPreviousDate(new Date(data.created_at).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }));
+        }
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
 
   const updateField = (key, value) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
@@ -138,12 +156,20 @@ export default function BriefPage() {
       <div className="page-wrapper" style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "80vh" }}>
         <div style={{ textAlign: "center", animation: "fadeInUp 0.6s ease-out" }}>
           <div style={{ fontSize: 64, marginBottom: 20 }}>✅</div>
-          <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 12 }}>Cảm ơn bạn!</h1>
+          <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 12 }}>
+            {hasPrevious ? "Cập nhật thành công!" : "Cảm ơn bạn!"}
+          </h1>
           <p style={{ color: "var(--text-secondary)", marginBottom: 30 }}>
-            Phiếu khảo sát đã được gửi thành công.<br/>
-            Chúng tôi sẽ liên hệ lại trong vòng 24-48h.
+            {hasPrevious
+              ? "Phiếu khảo sát đã được cập nhật.\nChúng tôi sẽ xem xét các thay đổi ngay."
+              : "Phiếu khảo sát đã được gửi thành công.\nChúng tôi sẽ liên hệ lại trong vòng 24-48h."}
           </p>
-          <Link href="/" className="btn btn-primary">← Quay lại Portal</Link>
+          <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+            <Link href="/" className="btn btn-primary">← Quay lại Portal</Link>
+            <button className="btn btn-outline" onClick={() => { setSubmitted(false); setHasPrevious(true); }}>
+              ✏️ Tiếp tục chỉnh sửa
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -188,6 +214,17 @@ export default function BriefPage() {
           font-size: 14px; color: var(--text-secondary);
           line-height: 1.7; max-width: 600px; margin: 0 auto;
         }
+        .previous-banner {
+          display: flex; align-items: center; gap: 12px;
+          padding: 14px 20px; margin-bottom: 30px;
+          background: rgba(201,168,76,0.06); border: 1px solid rgba(201,168,76,0.2);
+          border-radius: 8px; animation: fadeInUp 0.4s ease-out;
+        }
+        .previous-icon { font-size: 20px; }
+        .previous-text { flex: 1; }
+        .previous-title { font-size: 13px; font-weight: 700; color: var(--gold); margin-bottom: 2px; }
+        .previous-sub { font-size: 12px; color: var(--text-secondary); }
+        .previous-badge { padding: 4px 12px; border-radius: 12px; font-size: 10px; font-weight: 700; background: rgba(201,168,76,0.15); color: var(--gold); text-transform: uppercase; letter-spacing: 1px; }
         .section { margin-bottom: 40px; }
         .section-title {
           font-size: 12px; font-weight: 800; color: #fff;
@@ -237,6 +274,7 @@ export default function BriefPage() {
           text-transform: uppercase; letter-spacing: 2px;
           border: none; border-radius: var(--radius);
           cursor: pointer; transition: all 0.3s;
+          font-family: var(--font);
         }
         .submit-btn.primary {
           background: linear-gradient(135deg, var(--gold), var(--gold-dim));
@@ -254,6 +292,7 @@ export default function BriefPage() {
         .submit-btn:disabled {
           opacity: 0.5; cursor: not-allowed; transform: none !important;
         }
+        .loading-brief { text-align: center; padding: 60px; color: var(--text-muted); font-size: 14px; }
         @media (max-width: 768px) {
           .brief-body { padding: 24px; }
           .checkbox-grid { grid-template-columns: 1fr; }
@@ -275,86 +314,103 @@ export default function BriefPage() {
             <p>Vui lòng điền đầy đủ thông tin để chúng tôi hiểu sâu sắc nhất về tầm nhìn và yêu cầu của bạn.</p>
           </div>
 
-          {SECTIONS.map((section) => (
-            <div key={section.id} className="section">
-              <div className="section-title">{section.title}</div>
-              {section.fields.map((field) => (
-                <div key={field.key} className="form-group">
-                  <label className="question-label">{field.label}</label>
-                  {field.hint && <span className="hint-text">{field.hint}</span>}
+          {loading ? (
+            <div className="loading-brief">⏳ Đang tải dữ liệu...</div>
+          ) : (
+            <>
+              {hasPrevious && (
+                <div className="previous-banner">
+                  <div className="previous-icon">📋</div>
+                  <div className="previous-text">
+                    <div className="previous-title">Bạn đã gửi phiếu trước đó</div>
+                    <div className="previous-sub">Lần gửi gần nhất: {previousDate} — Dữ liệu đã được tải lại để bạn xem và chỉnh sửa.</div>
+                  </div>
+                  <div className="previous-badge">Đã điền</div>
+                </div>
+              )}
 
-                  {field.type === "text" && (
-                    <input
-                      className="input"
-                      type="text"
-                      value={formData[field.key] || ""}
-                      onChange={(e) => updateField(field.key, e.target.value)}
-                    />
-                  )}
+              {SECTIONS.map((section) => (
+                <div key={section.id} className="section">
+                  <div className="section-title">{section.title}</div>
+                  {section.fields.map((field) => (
+                    <div key={field.key} className="form-group">
+                      <label className="question-label">{field.label}</label>
+                      {field.hint && <span className="hint-text">{field.hint}</span>}
 
-                  {field.type === "textarea" && (
-                    <textarea
-                      className="textarea"
-                      value={formData[field.key] || ""}
-                      onChange={(e) => updateField(field.key, e.target.value)}
-                    />
-                  )}
+                      {field.type === "text" && (
+                        <input
+                          className="input"
+                          type="text"
+                          value={formData[field.key] || ""}
+                          onChange={(e) => updateField(field.key, e.target.value)}
+                        />
+                      )}
 
-                  {(field.type === "checkbox" || field.type === "checkbox_with_other") && (
-                    <div className={`checkbox-grid ${field.options.length <= 3 ? "single" : ""}`}>
-                      {field.options.map((opt) => {
-                        const checked = (formData[field.key] || []).includes(opt);
-                        return (
-                          <label key={opt} className={`cb-label ${checked ? "checked" : ""}`}>
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              onChange={() => toggleCheckbox(field.key, opt)}
-                            />
-                            {opt}
-                          </label>
-                        );
-                      })}
-                      {field.type === "checkbox_with_other" && (
-                        <div>
-                          <label className={`cb-label ${(formData[field.key] || []).includes("Khác") ? "checked" : ""}`}>
-                            <input
-                              type="checkbox"
-                              checked={(formData[field.key] || []).includes("Khác")}
-                              onChange={() => toggleCheckbox(field.key, "Khác")}
-                            />
-                            Khác:
-                          </label>
-                          {(formData[field.key] || []).includes("Khác") && (
-                            <input
-                              className="other-input"
-                              type="text"
-                              placeholder="Nhập nội dung khác..."
-                              value={formData[field.key + "_other"] || ""}
-                              onChange={(e) => updateField(field.key + "_other", e.target.value)}
-                            />
+                      {field.type === "textarea" && (
+                        <textarea
+                          className="textarea"
+                          value={formData[field.key] || ""}
+                          onChange={(e) => updateField(field.key, e.target.value)}
+                        />
+                      )}
+
+                      {(field.type === "checkbox" || field.type === "checkbox_with_other") && (
+                        <div className={`checkbox-grid ${field.options.length <= 3 ? "single" : ""}`}>
+                          {field.options.map((opt) => {
+                            const checked = (formData[field.key] || []).includes(opt);
+                            return (
+                              <label key={opt} className={`cb-label ${checked ? "checked" : ""}`}>
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  onChange={() => toggleCheckbox(field.key, opt)}
+                                />
+                                {opt}
+                              </label>
+                            );
+                          })}
+                          {field.type === "checkbox_with_other" && (
+                            <div>
+                              <label className={`cb-label ${(formData[field.key] || []).includes("Khác") ? "checked" : ""}`}>
+                                <input
+                                  type="checkbox"
+                                  checked={(formData[field.key] || []).includes("Khác")}
+                                  onChange={() => toggleCheckbox(field.key, "Khác")}
+                                />
+                                Khác:
+                              </label>
+                              {(formData[field.key] || []).includes("Khác") && (
+                                <input
+                                  className="other-input"
+                                  type="text"
+                                  placeholder="Nhập nội dung khác..."
+                                  value={formData[field.key + "_other"] || ""}
+                                  onChange={(e) => updateField(field.key + "_other", e.target.value)}
+                                />
+                              )}
+                            </div>
                           )}
                         </div>
                       )}
                     </div>
-                  )}
+                  ))}
                 </div>
               ))}
-            </div>
-          ))}
 
-          <div className="submit-area">
-            <button
-              className="submit-btn primary"
-              onClick={handleSubmit}
-              disabled={submitting}
-            >
-              {submitting ? "Đang gửi..." : "📤 Gửi phiếu khảo sát"}
-            </button>
-            <button className="submit-btn secondary" onClick={() => window.print()}>
-              🖨 In / Lưu PDF
-            </button>
-          </div>
+              <div className="submit-area">
+                <button
+                  className="submit-btn primary"
+                  onClick={handleSubmit}
+                  disabled={submitting}
+                >
+                  {submitting ? "Đang gửi..." : hasPrevious ? "📤 Cập nhật phiếu khảo sát" : "📤 Gửi phiếu khảo sát"}
+                </button>
+                <button className="submit-btn secondary" onClick={() => window.print()}>
+                  🖨 In / Lưu PDF
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
