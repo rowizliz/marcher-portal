@@ -1,4 +1,5 @@
 import "./globals.css";
+import ClientAuthGuard from "@/components/ClientAuthGuard";
 
 export const metadata = {
   title: "Marcher — Client Portal",
@@ -8,7 +9,9 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="vi" suppressHydrationWarning>
-      <body suppressHydrationWarning>{children}</body>
+      <body suppressHydrationWarning>
+        <ClientAuthGuard>{children}</ClientAuthGuard>
+      </body>
     </html>
   );
 }

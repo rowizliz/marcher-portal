@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import NotificationBell from "@/components/NotificationBell";
 
 const STATUS_MAP = {
@@ -96,8 +97,9 @@ export default function Home() {
         }
       `}</style>
 
-      <div style={{ position:"fixed",top:24,right:24,zIndex:100 }}>
+      <div style={{ position:"fixed",top:24,right:24,zIndex:100,display:"flex",gap:8,alignItems:"center" }}>
         <NotificationBell target="client" />
+        <button onClick={() => { localStorage.removeItem("client_auth"); window.location.href = "/login"; }} style={{ width:40,height:40,borderRadius:"50%",border:"1px solid var(--border)",background:"var(--bg-card)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:16,transition:"all .2s" }} title="Đăng xuất">🚪</button>
       </div>
 
       <div className="portal-hero">
@@ -183,7 +185,7 @@ export default function Home() {
       )}
 
       <div className="admin-link">
-        <Link href="/admin/login">Admin Dashboard</Link>
+        <Link href="/admin/login">Admin</Link>
       </div>
     </div>
   );
