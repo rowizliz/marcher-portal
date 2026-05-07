@@ -8,6 +8,7 @@ export default function ChatBox({ role = "client" }) {
   const endRef = useRef(null);
   const fileRef = useRef(null);
   const pollRef = useRef(null);
+  const sendingRef = useRef(false);
 
   const fetchMsgs = async () => {
     const res = await fetch("/api/chat");
@@ -24,16 +25,22 @@ export default function ChatBox({ role = "client" }) {
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
   const sendMsg = async (msgText, file) => {
+    if (sendingRef.current) return;
     if (!msgText && !file) return;
+    sendingRef.current = true;
     setSending(true);
-    await fetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ from: role, text: msgText, file }),
-    });
-    setText("");
-    await fetchMsgs();
-    setSending(false);
+    try {
+      await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ from: role, text: msgText, file }),
+      });
+      setText("");
+      await fetchMsgs();
+    } finally {
+      sendingRef.current = false;
+      setSending(false);
+    }
   };
 
   const handleFile = (e) => {
@@ -130,7 +137,7 @@ export default function ChatBox({ role = "client" }) {
             rows={1}
             value={text}
             onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMsg(text); } }}
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (!sendingRef.current && text.trim()) sendMsg(text); } }}
             placeholder="Nhập tin nhắn..."
           />
           <button className="chat-btn chat-send" disabled={sending || !text.trim()} onClick={() => sendMsg(text)}>➤</button>
