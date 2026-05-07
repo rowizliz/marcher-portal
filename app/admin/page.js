@@ -230,6 +230,14 @@ export default function AdminDashboard() {
             <Link href="/" className="btn btn-outline" style={{ fontSize: 12, padding: "8px 16px" }}>
               Portal ↗
             </Link>
+            <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={async () => {
+              if (confirm("Reset mật khẩu client? Client sẽ phải tạo mật khẩu mới.")) {
+                await fetch("/api/client-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username: "marcher", action: "reset" }) });
+                alert("Đã reset mật khẩu client thành công!");
+              }
+            }}>
+              🔑 Reset PW
+            </button>
             <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={logout}>
               Đăng xuất
             </button>

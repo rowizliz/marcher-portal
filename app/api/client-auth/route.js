@@ -7,7 +7,7 @@ export async function GET() {
   return NextResponse.json({ hasPassword: !!pw });
 }
 
-// POST: login or setup
+// POST: login, setup or reset
 export async function POST(request) {
   try {
     const { username, password, action } = await request.json();
@@ -19,14 +19,13 @@ export async function POST(request) {
     const existingPw = await getClientPassword();
 
     if (action === "setup") {
-      // First time - create password
       if (existingPw) {
         return NextResponse.json({ error: "Mật khẩu đã được tạo trước đó. Vui lòng đăng nhập." }, { status: 400 });
       }
       if (!password || password.length < 4) {
         return NextResponse.json({ error: "Mật khẩu phải có ít nhất 4 ký tự" }, { status: 400 });
       }
-      await setClientPassword(password);
+      await setClientPassword(String(password).trim());
       return NextResponse.json({ success: true, message: "Tạo mật khẩu thành công" });
     }
 
@@ -34,10 +33,17 @@ export async function POST(request) {
       if (!existingPw) {
         return NextResponse.json({ needSetup: true });
       }
-      if (password !== existingPw) {
+      // Ensure both are trimmed strings for comparison
+      if (String(password).trim() !== String(existingPw).trim()) {
         return NextResponse.json({ error: "Mật khẩu không đúng" }, { status: 401 });
       }
       return NextResponse.json({ success: true });
+    }
+
+    // Admin can reset client password
+    if (action === "reset") {
+      await setClientPassword(null);
+      return NextResponse.json({ success: true, message: "Đã reset mật khẩu client" });
     }
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
