@@ -5,6 +5,9 @@ export default function ChatBox({ role = "client" }) {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [editText, setEditText] = useState("");
+  const [menuId, setMenuId] = useState(null);
   const endRef = useRef(null);
   const fileRef = useRef(null);
   const pollRef = useRef(null);
@@ -23,6 +26,13 @@ export default function ChatBox({ role = "client" }) {
   }, []);
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
+
+  // Close menu on outside click
+  useEffect(() => {
+    const handler = () => setMenuId(null);
+    document.addEventListener("click", handler);
+    return () => document.removeEventListener("click", handler);
+  }, []);
 
   const sendMsg = async (msgText, file) => {
     if (sendingRef.current) return;
@@ -43,14 +53,32 @@ export default function ChatBox({ role = "client" }) {
     }
   };
 
+  const handleDelete = async (id) => {
+    setMenuId(null);
+    await fetch("/api/chat", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) });
+    await fetchMsgs();
+  };
+
+  const startEdit = (msg) => {
+    setMenuId(null);
+    setEditingId(msg.id);
+    setEditText(msg.text);
+  };
+
+  const saveEdit = async () => {
+    if (!editText.trim()) return;
+    await fetch("/api/chat", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: editingId, text: editText }) });
+    setEditingId(null);
+    setEditText("");
+    await fetchMsgs();
+  };
+
   const handleFile = (e) => {
     const f = e.target.files[0];
     if (!f) return;
     if (f.size > 2 * 1024 * 1024) { alert("File quá lớn (tối đa 2MB)"); return; }
     const reader = new FileReader();
-    reader.onload = () => {
-      sendMsg("", { name: f.name, type: f.type, data: reader.result });
-    };
+    reader.onload = () => { sendMsg("", { name: f.name, type: f.type, data: reader.result }); };
     reader.readAsDataURL(f);
     e.target.value = "";
   };
@@ -69,19 +97,35 @@ export default function ChatBox({ role = "client" }) {
         .chat-messages { flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:10px; }
         .chat-messages::-webkit-scrollbar { width:4px; }
         .chat-messages::-webkit-scrollbar-thumb { background:var(--border);border-radius:2px; }
-        .msg { max-width:75%;display:flex;flex-direction:column; }
+        .msg { max-width:75%;display:flex;flex-direction:column;position:relative; }
         .msg.mine { align-self:flex-end; }
         .msg.theirs { align-self:flex-start; }
-        .msg-bubble { padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.5;word-break:break-word; }
+        .msg-bubble { padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.5;word-break:break-word;position:relative; }
         .msg.mine .msg-bubble { background:var(--gold);color:#111;border-bottom-right-radius:4px; }
         .msg.theirs .msg-bubble { background:var(--bg-elevated);color:var(--text);border:1px solid var(--border);border-bottom-left-radius:4px; }
         .msg-meta { font-size:10px;color:var(--text-muted);margin-top:4px;padding:0 4px; }
         .msg.mine .msg-meta { text-align:right; }
+        .msg-edited { font-size:10px;font-style:italic;opacity:.7; }
         .msg-file { margin-top:6px; }
         .msg-img { max-width:240px;max-height:200px;border-radius:8px;cursor:pointer;transition:transform .2s; }
         .msg-img:hover { transform:scale(1.02); }
         .msg-file-link { display:inline-flex;align-items:center;gap:6px;padding:8px 12px;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text);text-decoration:none;transition:border-color .2s; }
         .msg-file-link:hover { border-color:var(--gold); }
+
+        .msg-actions { position:absolute;top:-8px;display:flex;gap:2px;opacity:0;transition:opacity .15s;z-index:10; }
+        .msg.mine .msg-actions { left:-8px; }
+        .msg.theirs .msg-actions { right:-8px; }
+        .msg:hover .msg-actions { opacity:1; }
+        .msg-action-btn { width:26px;height:26px;border-radius:50%;border:1px solid var(--border);background:var(--bg-card);display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;transition:all .2s;color:var(--text-secondary); }
+        .msg-action-btn:hover { border-color:var(--gold);background:var(--bg-elevated); }
+        .msg-action-btn.del:hover { border-color:#e53935;color:#e53935; }
+
+        .edit-inline { display:flex;gap:6px;margin-top:6px; }
+        .edit-input { flex:1;padding:6px 10px;background:var(--bg-input);border:1px solid var(--gold);border-radius:6px;color:var(--text);font-size:13px;font-family:var(--font);outline:none; }
+        .edit-btn { padding:4px 12px;font-size:11px;font-weight:600;border-radius:4px;cursor:pointer;border:none;font-family:var(--font); }
+        .edit-save { background:var(--gold);color:#111; }
+        .edit-cancel { background:var(--bg-input);color:var(--text-secondary);border:1px solid var(--border); }
+
         .chat-input { display:flex;gap:8px;padding:14px 16px;border-top:1px solid var(--border);background:var(--bg-elevated); }
         .chat-text { flex:1;padding:10px 14px;background:var(--bg-input);border:1px solid var(--border);border-radius:20px;color:var(--text);font-size:13px;font-family:var(--font);outline:none;resize:none;max-height:80px; }
         .chat-text:focus { border-color:var(--gold); }
@@ -109,18 +153,45 @@ export default function ChatBox({ role = "client" }) {
           )}
           {messages.map((msg) => (
             <div key={msg.id} className={`msg ${isMe(msg.from) ? "mine" : "theirs"}`}>
-              <div className="msg-bubble">
-                {msg.text && <div>{msg.text}</div>}
-                {msg.file && (
-                  <div className="msg-file">
-                    {isImg(msg.file.type) ? (
-                      <img className="msg-img" src={msg.file.data} alt={msg.file.name} onClick={() => window.open(msg.file.data, "_blank")} />
-                    ) : (
-                      <a className="msg-file-link" href={msg.file.data} download={msg.file.name}>📎 {msg.file.name}</a>
-                    )}
+              {/* Action buttons - only show on own messages */}
+              {isMe(msg.from) && (
+                <div className="msg-actions">
+                  {msg.text && (
+                    <button className="msg-action-btn" onClick={(e) => { e.stopPropagation(); startEdit(msg); }} title="Sửa">✏️</button>
+                  )}
+                  <button className="msg-action-btn del" onClick={(e) => { e.stopPropagation(); handleDelete(msg.id); }} title="Xoá">🗑</button>
+                </div>
+              )}
+
+              {editingId === msg.id ? (
+                <div>
+                  <div className="edit-inline">
+                    <input
+                      className="edit-input"
+                      value={editText}
+                      onChange={(e) => setEditText(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") saveEdit(); if (e.key === "Escape") setEditingId(null); }}
+                      autoFocus
+                    />
+                    <button className="edit-btn edit-save" onClick={saveEdit}>✓</button>
+                    <button className="edit-btn edit-cancel" onClick={() => setEditingId(null)}>✕</button>
                   </div>
-                )}
-              </div>
+                </div>
+              ) : (
+                <div className="msg-bubble">
+                  {msg.text && <div>{msg.text}</div>}
+                  {msg.edited && <span className="msg-edited"> (đã sửa)</span>}
+                  {msg.file && (
+                    <div className="msg-file">
+                      {isImg(msg.file.type) ? (
+                        <img className="msg-img" src={msg.file.data} alt={msg.file.name} onClick={() => window.open(msg.file.data, "_blank")} />
+                      ) : (
+                        <a className="msg-file-link" href={msg.file.data} download={msg.file.name}>📎 {msg.file.name}</a>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
               <div className="msg-meta">
                 {msg.from === "admin" ? "Rowiz Lê" : "Marcher"} · {new Date(msg.timestamp).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
               </div>
