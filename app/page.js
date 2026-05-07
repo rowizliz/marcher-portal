@@ -38,7 +38,9 @@ export default function Home() {
         .portal-badge { font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:16px; }
         .portal-title { font-size:42px;font-weight:800;color:#fff;letter-spacing:-1px;margin-bottom:14px; }
         .portal-desc { font-size:15px;color:var(--text-secondary);max-width:480px;margin:0 auto;line-height:1.7; }
-        .cards-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:960px;margin:0 auto 60px; }
+        .cards-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:20px;max-width:960px;margin:0 auto 60px; }
+        .note-admin { font-size:13px;color:var(--text-secondary);line-height:1.6;margin-bottom:10px;padding:8px 12px;background:rgba(76,175,80,.06);border-radius:6px;border-left:3px solid #4caf50; }
+        .note-admin-label { font-size:10px;font-weight:700;color:#4caf50;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px; }
         .portal-card { background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:32px;transition:all .3s;position:relative;overflow:hidden; }
         .portal-card:hover { border-color:rgba(201,168,76,.3);transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,.3); }
         .card-badge { display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:20px; }
@@ -104,6 +106,7 @@ export default function Home() {
           { href: "/brief", badge: "Form", badgeColor: "#4caf50", icon: "📋", title: "Client Brief", desc: "Điền phiếu khảo sát dự án để chúng tôi hiểu rõ tầm nhìn và yêu cầu của bạn.", link: "Điền ngay →" },
           { href: "/invoice", badge: "Invoice", badgeColor: "#c9a84c", icon: "🧾", title: "Hóa Đơn", desc: "Xem chi tiết hóa đơn, hạng mục công việc và thông tin thanh toán.", link: "Xem hóa đơn →" },
           { href: "/contract", badge: "Contract", badgeColor: "#e57373", icon: "📄", title: "Hợp Đồng", desc: "Xem toàn bộ điều khoản hợp đồng dịch vụ thiết kế và phát triển website.", link: "Xem hợp đồng →" },
+          { href: "/chat", badge: "Chat", badgeColor: "#42a5f5", icon: "💬", title: "Trò chuyện", desc: "Nhắn tin trực tiếp với đội ngũ thiết kế, gửi ảnh và file.", link: "Mở chat →" },
         ].map((card) => (
           <Link href={card.href} key={card.href} style={{ textDecoration: "none" }}>
             <div className="portal-card">
@@ -145,6 +148,12 @@ export default function Home() {
 
                 {openNote === step.id && (
                   <div className="note-panel">
+                    {step.admin_note && (
+                      <div className="note-admin">
+                        <div className="note-admin-label">Phản hồi từ Rowiz Lê Design</div>
+                        {step.admin_note}
+                      </div>
+                    )}
                     {step.client_note && (
                       <div className="note-existing">{step.client_note}</div>
                     )}

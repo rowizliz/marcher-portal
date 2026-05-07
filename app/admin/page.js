@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import ContentEditor from "./ContentEditor";
 import ProgressEditor from "./ProgressEditor";
+import ChatBox from "@/components/ChatBox";
 
 const PHASES = {
   week_1: { label: "Tuần 1 — Build Up", color: "#c9a84c" },
@@ -234,13 +235,13 @@ export default function AdminDashboard() {
         </div>
 
         <div className="tab-bar">
-          {["overview", "submissions", "workflow", "progress", "content"].map((t) => (
+          {["overview", "submissions", "workflow", "progress", "chat", "content"].map((t) => (
             <button
               key={t}
               className={`tab-btn ${tab === t ? "active" : ""}`}
               onClick={() => setTab(t)}
             >
-              {t === "overview" ? "📊 Tổng quan" : t === "submissions" ? "📋 Submissions" : t === "workflow" ? "⚙️ Workflow" : t === "progress" ? "📍 Tiến độ" : "✏️ Nội dung"}
+              {t === "overview" ? "📊 Tổng quan" : t === "submissions" ? "📋 Briefs" : t === "workflow" ? "⚙️ Workflow" : t === "progress" ? "📍 Tiến độ" : t === "chat" ? "💬 Chat" : "✏️ Nội dung"}
             </button>
           ))}
         </div>
@@ -393,6 +394,15 @@ export default function AdminDashboard() {
 
         {/* CONTENT TAB */}
         {tab === "content" && <ContentEditor />}
+
+        {/* CHAT TAB */}
+        {tab === "chat" && (
+          <div>
+            <h3 style={{ color: "#fff", marginBottom: 16 }}>💬 Trò chuyện với Marcher</h3>
+            <p style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 20 }}>Gửi tin nhắn, ảnh hoặc file cho khách hàng. Auto-refresh mỗi 4 giây.</p>
+            <ChatBox role="admin" />
+          </div>
+        )}
 
         {/* DETAIL MODAL */}
         {selectedSub && (
