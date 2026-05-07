@@ -10,8 +10,7 @@ export default function ClientAuthGuard({ children }) {
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
-    // Skip auth for public paths
-    if (PUBLIC_PATHS.some(p => pathname.startsWith(p))) {
+    if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
       setChecked(true);
       return;
     }
@@ -26,8 +25,28 @@ export default function ClientAuthGuard({ children }) {
 
   if (!checked) {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", color: "var(--text-muted)" }}>
-        ⏳
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexDirection: "column",
+          gap: 16,
+          minHeight: "100vh",
+          color: "var(--ink-faded)",
+        }}
+      >
+        <div
+          style={{
+            width: 28,
+            height: 28,
+            border: "2px solid var(--line)",
+            borderTopColor: "var(--gold)",
+            borderRadius: "50%",
+            animation: "spin 0.8s linear infinite",
+          }}
+        />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
