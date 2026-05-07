@@ -1,16 +1,14 @@
 import { NextResponse } from "next/server";
-import { readData, writeData } from "@/lib/store";
+import { getSubmissions, addSubmission, updateSubmissionStatus } from "@/lib/store";
 
 export async function GET() {
-  const data = readData();
-  return NextResponse.json(data.submissions || []);
+  const submissions = await getSubmissions();
+  return NextResponse.json(submissions);
 }
 
 export async function POST(request) {
   try {
     const body = await request.json();
-    const data = readData();
-
     const submission = {
       id: crypto.randomUUID(),
       created_at: new Date().toISOString(),
@@ -19,13 +17,9 @@ export async function POST(request) {
       contact_person: body.contact_person || "N/A",
       form_data: body.form_data || {},
     };
-
-    data.submissions = data.submissions || [];
-    data.submissions.unshift(submission);
-    writeData(data);
-
+    await addSubmission(submission);
     return NextResponse.json({ success: true, id: submission.id }, { status: 201 });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 }
@@ -33,11 +27,8 @@ export async function POST(request) {
 export async function PATCH(request) {
   try {
     const { id, status } = await request.json();
-    const data = readData();
-    const sub = (data.submissions || []).find((s) => s.id === id);
-    if (!sub) return NextResponse.json({ error: "Not found" }, { status: 404 });
-    sub.status = status;
-    writeData(data);
+    const result = await updateSubmissionStatus(id, status);
+    if (!result) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
