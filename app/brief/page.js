@@ -99,6 +99,7 @@ export default function BriefPage() {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [hasPrevious, setHasPrevious] = useState(false);
+  const [previousId, setPreviousId] = useState(null);
   const [previousDate, setPreviousDate] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -107,10 +108,12 @@ export default function BriefPage() {
     fetch("/api/submissions/latest")
       .then(r => r.json())
       .then(data => {
-        if (data && data.form_data) {
+        if (data && data.form_data && Object.keys(data.form_data).length > 0) {
           setFormData(data.form_data);
           setHasPrevious(true);
-          setPreviousDate(new Date(data.created_at).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }));
+          setPreviousId(data.id);
+          const dateStr = data.updated_at || data.created_at;
+          setPreviousDate(new Date(dateStr).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }));
         }
         setLoading(false);
       })
@@ -134,17 +137,39 @@ export default function BriefPage() {
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
-      const res = await fetch("/api/submissions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          company_name: formData.company_name || "Chưa điền",
-          contact_person: formData.contact_person || "Chưa điền",
-          form_data: formData,
-        }),
-      });
-      if (res.ok) setSubmitted(true);
-      else alert("Có lỗi xảy ra. Vui lòng thử lại.");
+      const payload = {
+        company_name: formData.company_name || "Chưa điền",
+        contact_person: formData.contact_person || "Chưa điền",
+        form_data: formData,
+      };
+
+      let res;
+      if (previousId) {
+        // Update existing submission
+        res = await fetch("/api/submissions", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: previousId, ...payload }),
+        });
+      } else {
+        // Create new submission
+        res = await fetch("/api/submissions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setPreviousId(data.id);
+        }
+      }
+
+      if (res.ok) {
+        setSubmitted(true);
+        setHasPrevious(true);
+      } else {
+        alert("Có lỗi xảy ra. Vui lòng thử lại.");
+      }
     } catch {
       alert("Không thể kết nối. Vui lòng thử lại.");
     }
