@@ -81,7 +81,7 @@ export default function NotificationBell({ target = "client" }) {
     <div ref={ref} style={{ position: "relative" }}>
       <style>{`
         .nb-bell {
-          position:relative; width:40px; height:40px;
+          position:relative; width:44px; height:44px;
           border-radius:var(--r-full);
           border:1px solid var(--line);
           background:var(--bg-2);
@@ -89,10 +89,13 @@ export default function NotificationBell({ target = "client" }) {
           cursor:pointer;
           color:var(--ink-muted);
           transition:all var(--dur-base) var(--ease);
+          -webkit-tap-highlight-color:transparent;
         }
+        @media (min-width:768px) { .nb-bell { width:40px; height:40px; } }
         @media (hover:hover) {
           .nb-bell:hover { color:var(--gold); border-color:var(--line-gold); background:var(--bg-3); }
         }
+        .nb-bell:active { background:var(--bg-3); }
         .nb-bell.has-unread { color:var(--gold); }
 
         .nb-badge {
@@ -212,8 +215,44 @@ export default function NotificationBell({ target = "client" }) {
         }
         .nb-empty-text { font-size:var(--text-sm); }
 
-        @media (max-width:480px) {
-          .nb-dropdown { width:calc(100vw - 32px); right:-8px; }
+        /* ── MOBILE: Bottom-sheet pattern ── */
+        @media (max-width:640px) {
+          .nb-backdrop {
+            position:fixed; inset:0;
+            background:rgba(0,0,0,0.5);
+            backdrop-filter:blur(2px);
+            -webkit-backdrop-filter:blur(2px);
+            z-index:999;
+            animation:fadeIn var(--dur-base) var(--ease);
+          }
+          .nb-dropdown {
+            position:fixed;
+            top:auto; right:0; left:0; bottom:0;
+            width:100%;
+            border-radius:var(--r-xl) var(--r-xl) 0 0;
+            border-bottom:none;
+            max-height:80vh;
+            display:flex; flex-direction:column;
+            padding-bottom:env(safe-area-inset-bottom);
+            animation:nb-slide-up var(--dur-base) var(--ease-out);
+            transform-origin:bottom;
+          }
+          .nb-dropdown::before {
+            content:"";
+            display:block;
+            width:36px; height:4px;
+            background:var(--ink-dim);
+            border-radius:var(--r-full);
+            margin:var(--s-3) auto 0;
+            flex-shrink:0;
+          }
+          .nb-list { max-height:none; flex:1; }
+          .nb-header { padding:var(--s-4) var(--s-5) var(--s-3); }
+          .nb-item { padding:var(--s-4) var(--s-5); }
+        }
+        @keyframes nb-slide-up {
+          from { transform:translateY(100%); }
+          to   { transform:translateY(0); }
         }
       `}</style>
 
@@ -228,7 +267,9 @@ export default function NotificationBell({ target = "client" }) {
       </button>
 
       {open && (
-        <div className="nb-dropdown" role="dialog" aria-label="Danh sách thông báo">
+        <>
+          <div className="nb-backdrop" onClick={() => setOpen(false)} aria-hidden="true" />
+          <div className="nb-dropdown" role="dialog" aria-label="Danh sách thông báo">
           <div className="nb-header">
             <div className="nb-title">Thông báo</div>
             {unread > 0 && (
@@ -265,7 +306,15 @@ export default function NotificationBell({ target = "client" }) {
             )}
           </div>
         </div>
+        </>
       )}
+
+      <style>{`
+        /* Hide backdrop on desktop (only used as click-away on mobile sheet) */
+        @media (min-width:641px) {
+          .nb-backdrop { display:none; }
+        }
+      `}</style>
     </div>
   );
 }

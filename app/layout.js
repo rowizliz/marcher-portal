@@ -20,6 +20,15 @@ export const metadata = {
   description: "Premium Digital Platform Portal cho Marcher × Rowiz Lê Design",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: "cover",
+  themeColor: "#08080a",
+  colorScheme: "dark",
+};
+
 export default function RootLayout({ children }) {
   return (
     <html lang="vi" className={`${inter.variable} ${fraunces.variable}`} suppressHydrationWarning>
