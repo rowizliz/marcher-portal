@@ -5,6 +5,7 @@ import Link from "next/link";
 import ContentEditor from "./ContentEditor";
 import ProgressEditor from "./ProgressEditor";
 import ChatBox from "@/components/ChatBox";
+import NotificationBell from "@/components/NotificationBell";
 
 const PHASES = {
   week_1: { label: "Tuần 1 — Build Up", color: "#c9a84c" },
@@ -224,7 +225,8 @@ export default function AdminDashboard() {
             <div className="admin-title">🏗️ Admin Dashboard</div>
             <div className="admin-subtitle">Marcher — Premium Digital Platform</div>
           </div>
-          <div style={{ display: "flex", gap: 10 }}>
+          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <NotificationBell target="admin" />
             <Link href="/" className="btn btn-outline" style={{ fontSize: 12, padding: "8px 16px" }}>
               Portal ↗
             </Link>

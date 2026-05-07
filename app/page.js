@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import NotificationBell from "@/components/NotificationBell";
 
 const STATUS_MAP = {
   pending: { icon: "○", color: "#555", bg: "transparent" },
@@ -22,7 +23,7 @@ export default function Home() {
     setSaving(true);
     const updated = steps.map(s => s.id === stepId ? { ...s, client_note: noteText } : s);
     setSteps(updated);
-    await fetch("/api/progress", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ steps: updated }) });
+    await fetch("/api/progress", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ steps: updated, source: "client" }) });
     setSaving(false);
     setOpenNote(null);
   };
@@ -94,6 +95,10 @@ export default function Home() {
           .portal-title { font-size:28px; }
         }
       `}</style>
+
+      <div style={{ position:"fixed",top:24,right:24,zIndex:100 }}>
+        <NotificationBell target="client" />
+      </div>
 
       <div className="portal-hero">
         <div className="portal-badge">Marcher × Rowiz Lê Design</div>

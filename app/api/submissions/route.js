@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSubmissions, addSubmission, updateSubmissionStatus } from "@/lib/store";
+import { getSubmissions, addSubmission, updateSubmissionStatus, addNotification } from "@/lib/store";
 
 export async function GET() {
   const submissions = await getSubmissions();
@@ -18,6 +18,7 @@ export async function POST(request) {
       form_data: body.form_data || {},
     };
     await addSubmission(submission);
+    await addNotification("admin", "submission", "📋 Client Brief mới!", `${submission.company_name} vừa gửi phiếu khảo sát dự án`);
     return NextResponse.json({ success: true, id: submission.id }, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
